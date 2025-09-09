@@ -1,0 +1,17 @@
+apiVersion: v1
+type: Pod
+metadata:
+  name: nginx-pod
+  namespace: process-info-test
+spec:
+  shareProcessNamespace: true
+  containers:
+    - name: nginx
+      image: nginx:latest
+      ports:
+      - containerPort: 8080
+    - name: nginx
+      image: nginx:latest
+      ports:
+      - containerPort: 8088
+  
