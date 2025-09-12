@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fancy-run
+  labels:
+    app: fancy-app
+spec:
+  initContainers:
+  - name: prepare-data
+    image: node:24.7-alpine3.22
+    imagePullPolicy: IfNotPresent
+    command: ["sh", "-c", "cp /distributed/sidecar/paas/cloned-repo/* /app/; cd /app/; npm install; git init"]
+    volumeMounts:
+      - name: fancy-volume
+        mountPath: /app
+      - name: source-data
+        mountPath: /distributed
+  containers:
+    - name: fancy-run
+      image: paas-fancy-run:1.0
+      ports:
+        - containerPort: 8099
+      volumeMounts:
+        - mountPath: /app
+          name: fancy-volume
+    - name: fancy-run-poller
+      image: paas-fancy-run-poller:1.0
+      volumeMounts:
+        - mountPath: /app
+          name: fancy-volume
+  volumes:
+    - name: fancy-volume
+      emptyDir:
+        sizeLimit: 500Mi
+    - name: source-data
+      persistentVolumeClaim:
+        claimName: source-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fancy-service
+spec:
+  selector:
+    app: fancy-app
+  ports:
+    - port: 8099
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fancy-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: fancy-service
+            port:
+              number: 8099
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: source-pv
+spec:
+  accessModes:
+    - ReadOnlyMany
+  capacity:
+    storage: 1Gi
+  storageClassName: standard
+  hostPath:
+    path: /distributed
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: source-pvc
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+  volumeName: source-pv

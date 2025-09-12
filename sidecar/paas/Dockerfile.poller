@@ -1,0 +1,9 @@
+FROM alpine
+
+WORKDIR /app
+
+COPY poller.sh /poller/
+
+RUN apk add --no-cache openssh-client git
+
+CMD [ "/poller/poller.sh" ]

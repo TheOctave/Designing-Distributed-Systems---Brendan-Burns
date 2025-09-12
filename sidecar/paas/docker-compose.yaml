@@ -1,0 +1,22 @@
+version: '3'
+services:
+  fancy-run:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - 8099:8099
+    volumes:
+      - app-data:/app
+  fancy-run-poller:
+    build:
+      context: .
+      dockerfile: Dockerfile.poller
+      ssh:
+        - default
+    volumes:
+      - app-data:/app
+
+volumes:
+  app-data:
+    
