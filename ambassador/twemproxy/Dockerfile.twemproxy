@@ -1,0 +1,5 @@
+FROM malexer/twemproxy:latest
+
+COPY nutcracker.yaml /etc/nutcracker.conf
+
+EXPOSE 11380

@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: experiment
+  labels:
+    app: experiment
+spec:
+  containers:
+  - name: webapp
+    image: experiment-image:1.0
+    ports:
+    - containerPort: 3000
+      name: experiment
+    env:
+    - name: LABEL
+      value: experiment
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  containers:
+  - name: webapp
+    image: experiment-image:1.0
+    ports:
+    - containerPort: 3000
+      name: web
+    env:
+    - name: LABEL
+      value: web
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ambassador
+  labels:
+    app: ambassador
+spec:
+  containers:
+  # This is the ambassador container
+  - name: ambassador
+    image: ambassador-nginx:1.0
+    ports:
+    - containerPort: 80
+      name: ambassador-port
+---
+# This is the experiment service
+apiVersion: v1
+kind: Service
+metadata:
+  name: experiment
+  labels:
+    app: experiment
+spec:
+  ports:
+  - port: 80
+    name: experiment-port
+    targetPort: experiment
+  selector:
+    app: experiment
+---
+# This is the 'prod' service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  ports:
+  - port: 80
+    name: web-port
+    targetPort: web
+  selector:
+    app: web
+---
+# This is the 'ambassador' service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ambassador
+  labels:
+    app: ambassador
+spec:
+  ports:
+  - port: 80
+    name: ambassador-port
+    targetPort: ambassador-port
+  selector:
+    app: ambassador
+---
+# this is the ambassador ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ambassador-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: ambassador
+            port:
+              number: 80
+---
