@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dictionary-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dictionary-server
+  template:
+    metadata:
+      labels:
+        app: dictionary-server
+    spec:
+      containers:
+      - name: server
+        image: brendanburns/dictionary-server
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: dictionary-server-service
+spec:
+  selector:
+    app: dictionary-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---

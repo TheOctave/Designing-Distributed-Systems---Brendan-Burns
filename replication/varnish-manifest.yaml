@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: varnish-cache
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: varnish-cache
+  template:
+    metadata:
+      labels:
+        app: varnish-cache
+    spec:
+      containers:
+      - name: cache
+        resources:
+          requests:
+            # We'll use two gigabytes for each varnish cache replica
+        image: varnish:latest
+        command:
+        - varnishd
+        - -F
+        - -f
+        - /etc/varnish-config/default.vcl
+        - -a
+        - 0.0.0.0:80
+        - -s
+        # This memory allocation should match the memory requested
+        - malloc,2G
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: varnish
+          mountPath: /etc/varnish-config
+      volumes:
+      - name: varnish
+        configMap:
+          name: varnish-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: varnish-service
+spec:
+  selector:
+    app: varnish-cache
+  ports:
+  - protocol: TCP
+    port: 80
+---
